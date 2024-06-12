@@ -98,8 +98,14 @@ def get_gpt_msg(prompt, prev_chat=None):
     """
     Generates a response from the GPT-4o model based on the prompt and previous chat history.
     """
-    print(HIDE_CURSOR, end="")
-    print(c.purple("... \r"))
+
+    if prev_chat:
+        print(HIDE_CURSOR, end="")
+        print_ai_msg(c.yellow("\n   ...\n"), get_time_ms(), ignore_markdown=True)
+        fake_user_input()
+    else:
+        print(HIDE_CURSOR, end="")
+        print(c.yellow("\n   ...\n"))
 
     messages = [{"role": "user", "content": prompt}]
 
@@ -117,7 +123,10 @@ def get_gpt_msg(prompt, prev_chat=None):
     else:
         save_chat(prompt, msg, get_time_ms())
 
-    clear_prompt()
+    if prev_chat:
+        clear_n_lines(9)
+    else:
+        clear_n_lines(3)
     print(SHOW_CURSOR, end="")
 
     return msg
@@ -155,35 +164,44 @@ def get_args():
     return prompt, is_continue, is_browse, is_new
 
 
-def print_time(time, right_align=False):
+def get_time(time, right_align=False):
     time_str = get_formatted_datetime(time)
 
     # I made the bar invisible as it wa a little distracting
-    bar = c.grey(" " * (cols - 10 - len(time_str) - 1))
-    padding = " " * 10
+    bar_length = min(6, (cols - 10 - len(time_str) - 3))
+    bar = c.grey(" " * bar_length)
+    padding = " " * (cols - bar_length - len(time_str) - 3)
     if right_align:
-        print(padding + bar + " " + c.yellow(time_str))
+        return padding + bar + " " + c.blue(time_str)
     else:
-        print(c.yellow(time_str + " " + bar))
+        return c.yellow(time_str + " ") + bar
 
 
-def print_ai_msg(msg, time):
+def print_ai_msg(msg, time, ignore_markdown=False):
+    if not ignore_markdown:
+        md = get_markdown(msg)
+    else:
+        md = msg
+
     print("")
-    print_time(time)
-
-    print(get_markdown(msg))
+    print(c.yellow("│ ") + get_time(time))
+    for line in md.split("\n"):
+        if line[0:3] == "  ":
+            print("   " + line)
+        else:
+            print(c.yellow("│ ") + line)
 
 
 def print_user_msg(msg, time):
-    print("")
-    print_time(time, True)
-
     md = get_markdown(msg)
+
+    print("")
+    print(get_time(time, True) + c.blue(" │"))
     if "\n" in md:
         for line in md.split("\n"):
-            print(" " * (cols - msg_width - 1), line)
+            print(" " * (cols - msg_width - 3), line + c.blue(" │"))
     else:
-        print(" " * (cols - get_visible_length(md) - 1), md)
+        print(" " * (cols - get_visible_length(md) - 3), md + c.blue(" │"))
 
 
 def print_header():
@@ -318,7 +336,7 @@ def browse_interface():
         # Select Option
         elif key == "\n" or key == "\r":
             clear_n_lines(browse_page_size + 9)
-            choice = position
+            choice = position % browse_page_size
             break
 
         # Quit with 'q'
@@ -375,13 +393,13 @@ def chat_interface(prompt="", chat_id=None, is_new=False):
 
     while not has_quit:
         prompt = user_input()
-        clear_prompt()
 
         if prompt == "quit" or prompt == "q" or prompt == "exit":
             has_quit = True
             print_goodbye()
             continue
 
+        clear_n_lines(1)
         print_user_msg(prompt, get_time_ms())
 
         msg = get_gpt_msg(prompt, prev_chat)
@@ -403,7 +421,7 @@ def main():
         chat_interface(prompt)
 
     # If new flag, start a new convo
-    if is_new:
+    elif is_new:
         chat_interface(is_new=True)
 
     # If the browse flag is passed, or the user didnt pass anything

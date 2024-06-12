@@ -144,10 +144,15 @@ def get_formatted_datetime(ms):
 
 
 def user_input():
-    result = input(c.bold(c.purple("\n> \n\033[1A\033[2C")))
-    clear_prompt()
-    print("\033[2A")
+    print(c.blue("\n" + "─" * cols))
+    result = input(c.bold(c.blue("\n> \n\033[1A\033[2C")))
+    clear_n_lines(3)
     return result
+
+
+def fake_user_input():
+    print(c.blue("\n" + "─" * cols), end="\r")
+    print(c.bold(c.blue("\n>\n")))
 
 
 def get_visible_length(s):
@@ -195,9 +200,9 @@ def print_goodbye():
     ]
 
     if random.randint(0, 20) == 0:
-        print("👉😎👉")
+        print(c.yellow("│ 👉😎👉"))
     else:
-        print(random.choice(goodbye_phrases) + " 👋")
+        print(c.yellow("│ ") + random.choice(goodbye_phrases) + " 👋")
 
 
 def center(str):
@@ -216,32 +221,3 @@ def get_key():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
-
-
-def menu_move_x(dir: int, pos: list[int], max_x: int):
-    new_x, new_y = pos
-
-    # any move resets y
-    new_y = 0
-
-    new_x += dir
-    if new_x >= max_x:
-        new_x = 0
-    elif new_x < 0:
-        new_x = max_x - 1
-
-    return new_x, new_y
-
-
-def menu_move_y(dir: int, pos: list[int], max_x: int, max_y: int):
-    new_x, new_y = pos
-    new_y += dir
-
-    if new_y >= max_y:
-        new_y = 0
-        new_x = menu_move_x(1, [new_x, new_y], max_x)[1]
-    elif new_y < 0:
-        new_y = max_y - 1
-        new_x = menu_move_x(-1, [new_x, new_y], max_x)[1]
-
-    return new_x, new_y
