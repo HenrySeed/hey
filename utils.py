@@ -19,6 +19,9 @@ SHOW_CURSOR = "\033[?25h"  # show cursor
 script_dir = os.path.dirname(os.path.abspath(__file__))
 data_json_path = file_path = os.path.join(script_dir, "prev_chats.json")
 
+# Number of columns in the terminal
+cols = int(os.popen("stty size", "r").read().split()[1])
+
 
 # Data Loading Utils ============================================================
 
@@ -158,7 +161,7 @@ def has_recent_conversation():
     If the last conversation was < 1 min ago, we auto continue
     """
     chats = get_saved_chats()
-    if chats[0]["time"] < (get_time_ms() - 1000 * 60):
+    if chats[0]["time"] < (get_time_ms() - 1000 * 60 * 5):
         return True
     else:
         return False
@@ -197,6 +200,11 @@ def print_goodbye():
         print(random.choice(goodbye_phrases) + " 👋")
 
 
+def center(str):
+    padding = round((cols - get_visible_length(str)) / 2) * " "
+    return padding + str + padding
+
+
 def get_key():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
@@ -208,3 +216,32 @@ def get_key():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
+
+
+def menu_move_x(dir: int, pos: list[int], max_x: int):
+    new_x, new_y = pos
+
+    # any move resets y
+    new_y = 0
+
+    new_x += dir
+    if new_x >= max_x:
+        new_x = 0
+    elif new_x < 0:
+        new_x = max_x - 1
+
+    return new_x, new_y
+
+
+def menu_move_y(dir: int, pos: list[int], max_x: int, max_y: int):
+    new_x, new_y = pos
+    new_y += dir
+
+    if new_y >= max_y:
+        new_y = 0
+        new_x = menu_move_x(1, [new_x, new_y], max_x)[1]
+    elif new_y < 0:
+        new_y = max_y - 1
+        new_x = menu_move_x(-1, [new_x, new_y], max_x)[1]
+
+    return new_x, new_y

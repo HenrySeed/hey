@@ -3,23 +3,23 @@ This script interacts with the OpenAI GPT-4o model to generate responses based o
 It provides a command-line interface for users to have conversations with the GPT-4o model.
 
 Usage:
-	python main.py [OPTIONS] [PROMPT]
+    python main.py [OPTIONS] [PROMPT]
 
 Options:
-	-c, --continue    Continue the previous chat
+    -c, --continue	Continue the previous chat
 
 The script uses the OpenAI Python library to communicate with the GPT-4o model.
 It saves the conversation history in a JSON file named 'prev_chats.json' in the same directory as the script.
 
 Functions:
-	- get_time_ms(): Returns the current time in milliseconds.
-	- get_markdown(command): Runs a command in the shell and returns the output.
-	- get_gpt_msg(prompt, prev_chat, is_continue=False): Generates a response from the GPT-4o model based on the prompt and previous chat history.
-	- get_args(): Parses the command-line arguments and returns the prompt and is_continue flag.
-	- get_prev_chat(): Retrieves the most recent chat history from the 'prev_chats.json' file.
-	- save_chat(prompt, reply, time, is_continue=False): Saves the user prompt and assistant reply in the chat history.
-	- continue_interface(prompt): Provides an interactive interface for continuing the chat with the GPT-4o model.
-	- main(): The main entry point of the script.
+    - get_time_ms(): Returns the current time in milliseconds.
+    - get_markdown(command): Runs a command in the shell and returns the output.
+    - get_gpt_msg(prompt, prev_chat, is_continue=False): Generates a response from the GPT-4o model based on the prompt and previous chat history.
+    - get_args(): Parses the command-line arguments and returns the prompt and is_continue flag.
+    - get_prev_chat(): Retrieves the most recent chat history from the 'prev_chats.json' file.
+    - save_chat(prompt, reply, time, is_continue=False): Saves the user prompt and assistant reply in the chat history.
+    - chat_interface(prompt): Provides an interactive interface for continuing the chat with the GPT-4o model.
+    - main(): The main entry point of the script.
 
 Note: This script requires the OpenAI Python library and the 'glow' command-line tool to be installed.
 """
@@ -39,12 +39,13 @@ import readline  # Fixes input issues
 client = OpenAI()
 
 # Formatting options for textwraps
-cols = int(os.popen("stty size", "r").read().split()[1])
 msg_width = cols - 10
 
 # Menu Cursors
 cursor = "◉"
 cursor_empty = "◦"
+
+browse_page_size = 10
 
 
 def signal_handler(sig, frame):
@@ -131,10 +132,13 @@ def get_args():
     prompt = " ".join([arg for arg in args[1:] if arg[0] != "-"])
     is_continue = False
     is_browse = False
+    is_new = False
 
     for arg_flag in arg_flags:
         if arg_flag == "-c" or arg_flag == "--continue":
             is_continue = True
+        elif arg_flag == "-n" or arg_flag == "--new":
+            is_new = True
         elif arg_flag == "-b" or arg_flag == "--browse":
             is_browse = True
         elif arg_flag == "--clear-history":
@@ -143,12 +147,12 @@ def get_args():
             print_header()
             print("Usage: hey [OPTIONS] [PROMPT]")
             print("Options:")
-            print("  -b, --browse     Choose a previous chat to continue from")
+            print("  -b, --browse	 Choose a previous chat to continue from")
             print("  -c, --continue   Continue the previous chat")
             print("  --clear-history  Removes all previous chats")
             sys.exit(0)
 
-    return prompt, is_continue, is_browse
+    return prompt, is_continue, is_browse, is_new
 
 
 def print_time(time, right_align=False):
@@ -189,47 +193,67 @@ def print_header():
 
 
 def print_prev_chats(selected):
+
     print_header()
 
     # Read the original data
     chats = get_saved_chats()
+    num_pages = 0
+    selected_page = math.floor(selected / browse_page_size)
+    page_selected = selected - (selected_page * browse_page_size)
 
     # if no prev chats, show msg
     if len(chats) == 0:
         margin = math.floor((cols - 24) / 2) * " "
         print(margin + c.grey("No previous chats found.") + margin)
 
-    index = 1
-    available_indexes = []
-    ids = []
-    max_preview_len = cols - 40
-    for chat in chats:
-        msgs = chat["messages"]
-        print(
-            (
+    else:
+        chat_page = chats[
+            selected_page * browse_page_size : selected_page * browse_page_size
+            + browse_page_size
+        ]
+        num_pages = math.ceil(len(chats) / browse_page_size)
+
+        index = 1
+        ids = []
+        max_preview_len = cols - 40
+        for chat in chat_page:
+            msgs = chat["messages"]
+            print(
                 (
-                    c.green(cursor + " ")
-                    if selected == index - 1
-                    else c.grey(cursor_empty + " ")
+                    (
+                        c.green(cursor + " ")
+                        if page_selected == index - 1
+                        else c.grey(cursor_empty + " ")
+                    )
+                    if page_selected != None
+                    else ""
                 )
-                if selected != None
-                else ""
+                + c.grey(get_formatted_datetime(msgs[0]["time"])),
+                "",
+                msgs[0]["content"][0:max_preview_len]
+                + ("..." if len(msgs[0]["content"]) > max_preview_len else "   "),
+                " " * (max_preview_len - len(msgs[0]["content"][0:max_preview_len])),
+                c.grey("(" + str(len(msgs)) + ")") if len(msgs) > 2 else "",
             )
-            + c.grey(get_formatted_datetime(msgs[0]["time"])),
-            "",
-            msgs[0]["content"][0:max_preview_len]
-            + ("..." if len(msgs[0]["content"]) > max_preview_len else "   "),
-            " " * (max_preview_len - len(msgs[0]["content"][0:max_preview_len])),
-            c.grey("(" + str(len(msgs)) + ")") if len(msgs) > 2 else "",
-        )
-        available_indexes.append(str(index))
-        ids.append(chat["id"])
-        index += 1
+            ids.append(chat["id"])
+            index += 1
+
+        if num_pages > 1:
+            pages = []
+            for page in range(0, num_pages):
+                if page == selected_page:
+                    pages.append(c.white(c.bold(str(page))))
+                else:
+                    pages.append(str(page))
+
+            page_bar = "[ " + " ".join(pages) + " ]"
+            print("\n" + center(c.grey(page_bar)))
 
     padding = round((cols - 18) / 3) * " "
     print(c.purple("\n" + padding + "(n)ew chat" + padding + "(q)uit\n"))
 
-    return available_indexes, ids
+    return ids
 
 
 def browse_interface():
@@ -239,47 +263,81 @@ def browse_interface():
     new_chat = False
     position = 0
     choice = 0
+    total_chats = len(get_saved_chats())
 
     print(HIDE_CURSOR)
-    available_indexes, ids = print_prev_chats(position)
+    ids = print_prev_chats(position)
 
     while True:
-        num_options = len(available_indexes)
+        num_options = len(ids)
         key = get_key()
 
         if key == "\x1b":  # Handle escape sequences
             key += get_key()
             key += get_key()
 
-        if key == "\x1b[A":  # Up arrow
-            position = max(0, position - 1)
-            clear_n_lines(len(available_indexes) + 6)
-            available_indexes, ids = print_prev_chats(position)
-        elif key == "\x1b[B":  # Down arrow
-            position = min(num_options - 1, position + 1)
-            clear_n_lines(len(available_indexes) + 6)
-            available_indexes, ids = print_prev_chats(position)
-        elif key == "\n" or key == "\r":  # Select Option
-            clear_n_lines(len(available_indexes) + 8)
+        # Up arrow
+        if key == "\x1b[A":
+            # page, position = menu_move_y(-1, [page, position], num_pages, num_options)
+            position -= 1
+            if position < 0:
+                position = total_chats - 1
+            clear_n_lines(num_options + 8)
+            ids = print_prev_chats(position)
+
+        # Down arrow
+        elif key == "\x1b[B":
+            # page, position = menu_move_y(1, [page, position], num_pages, num_options)
+            position += 1
+            if position >= total_chats:
+                position = 0
+            clear_n_lines(num_options + 8)
+            ids = print_prev_chats(position)
+
+        # Tab or Arrow Right
+        elif key == "\t" or key == "\x1b[C":
+            # page, position = menu_move_x(1, [page, position], num_pages)
+            position += browse_page_size - (position % browse_page_size)
+            if position >= total_chats:
+                position = 0
+            clear_n_lines(num_options + 8)
+            ids = print_prev_chats(position)
+
+        # Arrow Left
+        elif key == "\x1b[D":
+            # page, position = menu_move_x(1, [page, position], num_pages)
+            position -= (position % browse_page_size) + browse_page_size
+            if position < 0:
+                position = total_chats - (total_chats % browse_page_size)
+            clear_n_lines(num_options + 8)
+            ids = print_prev_chats(position)
+
+        # Select Option
+        elif key == "\n" or key == "\r":
+            clear_n_lines(num_options + 8)
             choice = position
             break
-        elif key == "q":  # Quit with 'q'
-            clear_n_lines(len(available_indexes) + 8)
+
+        # Quit with 'q'
+        elif key == "q":
+            clear_n_lines(num_options + 9)
             print(SHOW_CURSOR)
             return
-        elif key == "n":  # new chat with 'n
-            clear_n_lines(len(available_indexes) + 7)
+
+        # new chat with 'n
+        elif key == "n":
+            clear_n_lines(num_options + 8)
             new_chat = True
             break
 
     print(SHOW_CURSOR)
     if new_chat:
-        continue_interface(is_new=True)
+        chat_interface(is_new=True)
     else:
-        continue_interface(chat_id=ids[choice])
+        chat_interface(chat_id=ids[choice])
 
 
-def continue_interface(prompt="", chat_id=None, is_new=False):
+def chat_interface(prompt="", chat_id=None, is_new=False):
     """
     Provides an interactive interface for continuing the chat with the GPT-4o model.
     """
@@ -335,11 +393,15 @@ def main():
     init_prev_chats()
 
     # nicely formats args and prints help if needed
-    prompt, is_continue, is_browse = get_args()
+    prompt, is_continue, is_browse, is_new = get_args()
 
     # If the continue flag is passed, jump straight in there
     if is_continue:
-        continue_interface(prompt)
+        chat_interface(prompt)
+
+    # If new flag, start a new convo
+    if is_new:
+        chat_interface(is_new=True)
 
     # If the browse flag is passed, or the user didnt pass anything
     elif is_browse or prompt.strip() == "":
