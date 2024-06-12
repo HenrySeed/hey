@@ -47,12 +47,10 @@ def get_saved_chats():
     return chats
 
 
-"""
-Retrieves the most recent chat history from the 'prev_chats.json' file.
-"""
-
-
 def get_prev_chat(chat_id=None):
+    """
+    Retrieves the most recent chat history from the 'prev_chats.json' file.
+    """
     # Read the original data
     chats = []
     if os.path.exists(data_json_path):
@@ -74,12 +72,10 @@ def get_prev_chat(chat_id=None):
         return most_recent_chat
 
 
-"""
-Saves the user prompt and assistant reply in the chat history.
-"""
-
-
 def save_chat(prompt, reply, time, prev_id=None):
+    """
+    Saves the user prompt and assistant reply in the chat history.
+    """
     # Read the original data
     chats = []
     if os.path.exists(data_json_path):
@@ -157,12 +153,10 @@ def get_visible_length(s):
     return len(stripped_string)
 
 
-"""
-If the last conversation was < 1 min ago, we auto continue
-"""
-
-
 def has_recent_conversation():
+    """
+    If the last conversation was < 1 min ago, we auto continue
+    """
     chats = get_saved_chats()
     if chats[0]["time"] < (get_time_ms() - 1000 * 60):
         return True

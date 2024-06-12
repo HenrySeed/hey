@@ -33,16 +33,16 @@ import math
 import re
 import color as c
 from utils import *
-import readline
+import readline  # Fixes input issues
 
 # Setup OpenAI client
 client = OpenAI()
 
-
 # Formatting options for textwraps
 cols = int(os.popen("stty size", "r").read().split()[1])
 msg_width = cols - 10
-# cursor = "▶"
+
+# Menu Cursors
 cursor = "◉"
 cursor_empty = "◦"
 
@@ -55,12 +55,10 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-"""
-Run a command in the shell and return the output.
-"""
-
-
 def get_markdown(msg, no_wrap=False):
+    """
+    Run a command in the shell and return the output.
+    """
     word_wrap = no_wrap == False and len(msg.strip()) > msg_width
     bubble_length = msg_width
     if not word_wrap:
@@ -95,12 +93,10 @@ def get_markdown(msg, no_wrap=False):
     return "\n".join(formatted).strip()
 
 
-"""
-Generates a response from the GPT-4o model based on the prompt and previous chat history.
-"""
-
-
 def get_gpt_msg(prompt, prev_chat=None):
+    """
+    Generates a response from the GPT-4o model based on the prompt and previous chat history.
+    """
     print(HIDE_CURSOR, end="")
     print(c.purple("... \r"))
 
@@ -126,12 +122,10 @@ def get_gpt_msg(prompt, prev_chat=None):
     return msg
 
 
-"""
-Parses the command-line arguments and returns the prompt and is_continue flag.
-"""
-
-
 def get_args():
+    """
+    Parses the command-line arguments and returns the prompt and is_continue flag.
+    """
     args = sys.argv
     arg_flags = [arg for arg in args if arg[0] == "-"]
     prompt = " ".join([arg for arg in args[1:] if arg[0] != "-"])
@@ -238,12 +232,10 @@ def print_prev_chats(selected):
     return available_indexes, ids
 
 
-"""
-Prompt interface, printing previous 
-"""
-
-
 def browse_interface():
+    """
+    Prompt interface, printing previous
+    """
     new_chat = False
     position = 0
     choice = 0
@@ -287,12 +279,10 @@ def browse_interface():
         continue_interface(chat_id=ids[choice])
 
 
-"""
-Provides an interactive interface for continuing the chat with the GPT-4o model.
-"""
-
-
 def continue_interface(prompt="", chat_id=None, is_new=False):
+    """
+    Provides an interactive interface for continuing the chat with the GPT-4o model.
+    """
 
     prev_chat = get_prev_chat(chat_id) if not is_new else None
     has_quit = False
@@ -337,13 +327,10 @@ def continue_interface(prompt="", chat_id=None, is_new=False):
         print_ai_msg(msg, get_time_ms())
 
 
-"""
-The main entry point of the script.
-"""
-
-
 def main():
-
+    """
+    The main entry point of the script.
+    """
     # makes chat history json store if its missing
     init_prev_chats()
 
