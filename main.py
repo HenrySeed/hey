@@ -239,6 +239,9 @@ def print_prev_chats(selected):
             ids.append(chat["id"])
             index += 1
 
+        for _ in range(browse_page_size - len(chat_page)):
+            print("")
+
         if num_pages > 1:
             pages = []
             for page in range(0, num_pages):
@@ -282,7 +285,7 @@ def browse_interface():
             position -= 1
             if position < 0:
                 position = total_chats - 1
-            clear_n_lines(num_options + 8)
+            clear_n_lines(browse_page_size + 8)
             ids = print_prev_chats(position)
 
         # Down arrow
@@ -291,7 +294,7 @@ def browse_interface():
             position += 1
             if position >= total_chats:
                 position = 0
-            clear_n_lines(num_options + 8)
+            clear_n_lines(browse_page_size + 8)
             ids = print_prev_chats(position)
 
         # Tab or Arrow Right
@@ -300,7 +303,7 @@ def browse_interface():
             position += browse_page_size - (position % browse_page_size)
             if position >= total_chats:
                 position = 0
-            clear_n_lines(num_options + 8)
+            clear_n_lines(browse_page_size + 8)
             ids = print_prev_chats(position)
 
         # Arrow Left
@@ -309,24 +312,24 @@ def browse_interface():
             position -= (position % browse_page_size) + browse_page_size
             if position < 0:
                 position = total_chats - (total_chats % browse_page_size)
-            clear_n_lines(num_options + 8)
+            clear_n_lines(browse_page_size + 8)
             ids = print_prev_chats(position)
 
         # Select Option
         elif key == "\n" or key == "\r":
-            clear_n_lines(num_options + 8)
+            clear_n_lines(browse_page_size + 9)
             choice = position
             break
 
         # Quit with 'q'
         elif key == "q":
-            clear_n_lines(num_options + 9)
+            clear_n_lines(browse_page_size + 9)
             print(SHOW_CURSOR)
             return
 
         # new chat with 'n
         elif key == "n":
-            clear_n_lines(num_options + 8)
+            clear_n_lines(browse_page_size + 9)
             new_chat = True
             break
 
