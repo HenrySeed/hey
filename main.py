@@ -92,12 +92,13 @@ def get_markdown(msg, no_wrap=False):
     return "\n".join(formatted).strip()
 
 
-def get_gpt_msg(prompt, prev_chat=None):
+def get_gpt_msg(prompt, prev_chat=None, no_frame=False):
     """
     Generates a response from the GPT-4o model based on the prompt and previous chat history.
     """
+    user_time = get_time_ms()
 
-    if prev_chat:
+    if no_frame == False:
         print(HIDE_CURSOR, end="")
         print_ai_msg(c.yellow("\n   ...\n"), get_time_ms(), ignore_markdown=True)
         fake_user_input()
@@ -115,13 +116,14 @@ def get_gpt_msg(prompt, prev_chat=None):
 
     completion = client.chat.completions.create(model="gpt-4o", messages=messages)
 
+    ai_time = get_time_ms()
     msg = completion.choices[0].message.content
     if prev_chat:
-        save_chat(prompt, msg, get_time_ms(), prev_chat["id"])
+        save_chat(prompt, msg, user_time, ai_time, prev_chat["id"])
     else:
-        save_chat(prompt, msg, get_time_ms())
+        save_chat(prompt, msg, user_time, ai_time)
 
-    if prev_chat:
+    if no_frame == False:
         clear_n_lines(9)
     else:
         clear_n_lines(3)
@@ -151,12 +153,14 @@ def get_args():
         elif arg_flag == "--clear-history":
             reset_prev_chats()
         else:
+            print("")
             print_header()
             print("Usage: hey [OPTIONS] [PROMPT]")
             print("Options:")
-            print("  -b, --browse	 Choose a previous chat to continue from")
-            print("  -c, --continue   Continue the previous chat")
-            print("  --clear-history  Removes all previous chats")
+            print("  -n, --new	        Jumps straight into a new conversation")
+            print("  -b, --browse	    Choose a previous chat to continue from")
+            print("  -c, --continue     Continue the previous chat")
+            print("  --clear-history    Removes all previous chats")
             sys.exit(0)
 
     return prompt, is_continue, is_browse, is_new
@@ -418,7 +422,7 @@ def main():
     # If the user has passed text, we generate a message
     # and give it back with no interface
     else:
-        msg = get_gpt_msg(prompt, None)
+        msg = get_gpt_msg(prompt, None, no_frame=True)
         print(get_markdown(msg, no_wrap=True))
 
 

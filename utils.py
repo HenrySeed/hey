@@ -77,7 +77,7 @@ def get_prev_chat(chat_id=None):
         return most_recent_chat
 
 
-def save_chat(prompt, reply, time, prev_id=None):
+def save_chat(prompt, reply, user_time, ai_time, prev_id=None):
     """
     Saves the user prompt and assistant reply in the chat history.
     """
@@ -97,10 +97,10 @@ def save_chat(prompt, reply, time, prev_id=None):
 
         # Append the new data
         prev_chat["messages"].append(
-            {"role": "user", "content": prompt, "time": time},
+            {"role": "user", "content": prompt, "time": user_time},
         )
         prev_chat["messages"].append(
-            {"role": "assistant", "content": reply, "time": time}
+            {"role": "assistant", "content": reply, "time": ai_time}
         )
 
     else:
@@ -109,8 +109,8 @@ def save_chat(prompt, reply, time, prev_id=None):
             {
                 "id": str(uuid.uuid4()),
                 "messages": [
-                    {"role": "user", "content": prompt, "time": time},
-                    {"role": "assistant", "content": reply, "time": time},
+                    {"role": "user", "content": prompt, "time": user_time},
+                    {"role": "assistant", "content": reply, "time": ai_time},
                 ],
             }
         )
@@ -186,7 +186,7 @@ def user_input():
 
 
 def fake_user_input():
-    print(c.blue("\n" + "─" * cols), end="\r")
+    print(c.blue("\n" + "─" * cols))
     print(c.bold(c.blue("\n>\n")))
 
 
@@ -240,6 +240,8 @@ def print_goodbye():
         print_ai_msg_frame("👉😎👉", get_time_ms())
     else:
         print_ai_msg_frame(random.choice(goodbye_phrases) + " 👋", get_time_ms())
+
+    print("")
 
 
 def center(str):
