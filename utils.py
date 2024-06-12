@@ -22,6 +22,8 @@ data_json_path = file_path = os.path.join(script_dir, "prev_chats.json")
 # Number of columns in the terminal
 cols = int(os.popen("stty size", "r").read().split()[1])
 
+# Formatting options for textwraps
+msg_width = cols - 10
 
 # Data Loading Utils ============================================================
 
@@ -118,6 +120,39 @@ def save_chat(prompt, reply, time, prev_id=None):
         json.dump(chats, f)
 
 
+# Message Style Utils =============================================================
+
+
+def get_time_str(time, right_align=False):
+    time_str = get_formatted_datetime(time)
+
+    # I made the bar invisible as it wa a little distracting
+    bar_length = min(6, (cols - 10 - len(time_str) - 3))
+    bar = c.grey(" " * bar_length)
+    padding = " " * (cols - bar_length - len(time_str) - 3)
+    if right_align:
+        return padding + bar + " " + c.blue(time_str)
+    else:
+        return c.yellow(time_str + " ") + bar
+
+
+def print_ai_msg_frame(msg, time):
+    print("")
+    print(c.yellow("│ ") + get_time_str(time))
+    for line in msg.split("\n"):
+        print(c.yellow("│ ") + line)
+
+
+def print_user_msg_frame(msg, time):
+    print("")
+    print(get_time_str(time, True) + c.blue(" │"))
+    if "\n" in msg:
+        for line in msg.split("\n"):
+            print(" " * (cols - msg_width - 3), line + c.blue(" │"))
+    else:
+        print(" " * (cols - get_visible_length(msg) - 3), msg + c.blue(" │"))
+
+
 # Generic Utils ==================================================================
 
 
@@ -199,10 +234,12 @@ def print_goodbye():
         "Don't do anything I would do",
     ]
 
+    clear_n_lines(1)
+
     if random.randint(0, 20) == 0:
-        print(c.yellow("│ 👉😎👉"))
+        print_ai_msg_frame("👉😎👉", get_time_ms())
     else:
-        print(c.yellow("│ ") + random.choice(goodbye_phrases) + " 👋")
+        print_ai_msg_frame(random.choice(goodbye_phrases) + " 👋", get_time_ms())
 
 
 def center(str):

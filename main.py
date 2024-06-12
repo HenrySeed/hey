@@ -38,8 +38,6 @@ import readline  # Fixes input issues
 # Setup OpenAI client
 client = OpenAI()
 
-# Formatting options for textwraps
-msg_width = cols - 10
 
 # Menu Cursors
 cursor = "◉"
@@ -164,44 +162,18 @@ def get_args():
     return prompt, is_continue, is_browse, is_new
 
 
-def get_time(time, right_align=False):
-    time_str = get_formatted_datetime(time)
-
-    # I made the bar invisible as it wa a little distracting
-    bar_length = min(6, (cols - 10 - len(time_str) - 3))
-    bar = c.grey(" " * bar_length)
-    padding = " " * (cols - bar_length - len(time_str) - 3)
-    if right_align:
-        return padding + bar + " " + c.blue(time_str)
-    else:
-        return c.yellow(time_str + " ") + bar
-
-
 def print_ai_msg(msg, time, ignore_markdown=False):
     if not ignore_markdown:
         md = get_markdown(msg)
     else:
         md = msg
 
-    print("")
-    print(c.yellow("│ ") + get_time(time))
-    for line in md.split("\n"):
-        if line[0:3] == "  ":
-            print("   " + line)
-        else:
-            print(c.yellow("│ ") + line)
+    print_ai_msg_frame(md, time)
 
 
 def print_user_msg(msg, time):
     md = get_markdown(msg)
-
-    print("")
-    print(get_time(time, True) + c.blue(" │"))
-    if "\n" in md:
-        for line in md.split("\n"):
-            print(" " * (cols - msg_width - 3), line + c.blue(" │"))
-    else:
-        print(" " * (cols - get_visible_length(md) - 3), md + c.blue(" │"))
+    print_user_msg_frame(md, time)
 
 
 def print_header():
@@ -210,15 +182,15 @@ def print_header():
     print("")
 
 
-def print_prev_chats(selected):
+def print_prev_chats(position):
 
     print_header()
 
     # Read the original data
     chats = get_saved_chats()
     num_pages = 0
-    selected_page = math.floor(selected / browse_page_size)
-    page_selected = selected - (selected_page * browse_page_size)
+    selected_page = math.floor(position / browse_page_size)
+    selected = position - (selected_page * browse_page_size)
 
     # if no prev chats, show msg
     if len(chats) == 0:
@@ -234,26 +206,36 @@ def print_prev_chats(selected):
 
         index = 1
         ids = []
-        max_preview_len = cols - 40
+        max_preview = cols - 35
         for chat in chat_page:
             msgs = chat["messages"]
-            print(
-                (
-                    (
-                        c.green(cursor + " ")
-                        if page_selected == index - 1
-                        else c.grey(cursor_empty + " ")
-                    )
-                    if page_selected != None
-                    else ""
-                )
-                + c.grey(get_formatted_datetime(msgs[0]["time"])),
-                "",
-                msgs[0]["content"][0:max_preview_len]
-                + ("..." if len(msgs[0]["content"]) > max_preview_len else "   "),
-                " " * (max_preview_len - len(msgs[0]["content"][0:max_preview_len])),
-                c.grey("(" + str(len(msgs)) + ")") if len(msgs) > 2 else "",
+            active = selected == index - 1
+
+            date = get_formatted_datetime(msgs[0]["time"]) + "  "
+            preview = msgs[0]["content"][0:max_preview]
+            is_trunc = len(msgs[0]["content"]) > max_preview
+            preview_trail = ("..." if is_trunc else "   ") + " " * (
+                max_preview - len(preview)
             )
+            msg_count = " (" + str(len(msgs)) + ")" if len(msgs) > 2 else ""
+
+            if active:
+                print(
+                    c.green(cursor + " ")
+                    + c.bold(c.grey(date))
+                    + c.bold(preview)
+                    + c.bold(preview_trail)
+                    + c.bold(c.grey(msg_count))
+                )
+            else:
+                print(
+                    c.grey(cursor_empty + " ")
+                    + c.grey(date)
+                    + preview
+                    + preview_trail
+                    + c.grey(msg_count)
+                )
+
             ids.append(chat["id"])
             index += 1
 
@@ -393,6 +375,11 @@ def chat_interface(prompt="", chat_id=None, is_new=False):
 
     while not has_quit:
         prompt = user_input()
+
+        # To stop me entering empty inputs
+        if len(prompt.strip()) < 1:
+            clear_n_lines(1)
+            continue
 
         if prompt == "quit" or prompt == "q" or prompt == "exit":
             has_quit = True

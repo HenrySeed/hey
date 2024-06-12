@@ -49,5 +49,9 @@ def red_bg(str):
     return Fore.WHITE + Back.RED + str + Style.RESET_ALL
 
 
+def green_bg(str):
+    return Fore.WHITE + Back.GREEN + str + Style.RESET_ALL
+
+
 def black_bg(str):
     return Fore.WHITE + Back.BLACK + str + Style.RESET_ALL
