@@ -1,6 +1,8 @@
 # hey
 Your personal terminal assistant
 
+![Browsing Screenshot](./images/screenshot_browse.png)                                                 
+
 ## Install
 
 #### 1. Clone Repo
@@ -35,6 +37,9 @@ echo "export OPENAI_API_KEY='API_KEY_GOES_HERE'" >> ~/.zshrc    # For ZSH
 
 
 ## Usage
+
+![Continuing Screenshot](./images/screenshot_c.png)                                                 
+
 ```
 hey 
 Your personal terminal assistant
