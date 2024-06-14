@@ -1,5 +1,5 @@
 import pandas as pd
-import color as c
+import hey_py.color as c
 import sys
 import termios
 import tty
@@ -138,9 +138,9 @@ def get_time_str(time, right_align=False):
 
 def print_ai_msg_frame(msg, time):
     print("")
-    print(c.yellow("│ ") + get_time_str(time))
+    print(get_time_str(time))
     for line in msg.split("\n"):
-        print(c.yellow("│ ") + line)
+        print(line)
 
 
 def print_user_msg_frame(msg, time):
@@ -202,10 +202,11 @@ def get_recent_conversation():
     Returns that chat if was less than 5 mins ago, else returns None
     """
     chats = get_saved_chats()
-    if chats[0]["messages"][-1]["time"] > (get_time_ms() - 1000 * 60 * 5):
-        return chats[0]
-    else:
-        return None
+    if len(chats) > 0:
+        if chats[0]["messages"][-1]["time"] > (get_time_ms() - 1000 * 60 * 5):
+            return chats[0]
+
+    return None
 
 
 def clear_n_lines(n):

@@ -30,8 +30,8 @@ import subprocess
 import signal
 import math
 import re
-import color as c
-from utils import *
+import hey_py.color as c
+from .utils import *
 import readline  # Fixes input issues
 
 # Setup OpenAI client
@@ -42,7 +42,7 @@ client = OpenAI()
 cursor = "◉"
 cursor_empty = "◦"
 
-browse_page_size = 10
+max_page_size = 10
 
 
 def signal_handler(sig, frame):
@@ -188,24 +188,28 @@ def print_header():
 def print_prev_chats(position):
 
     print_header()
+    global browse_page_size
 
     # Read the original data
     chats = get_saved_chats()
     num_pages = 0
-    selected_page = math.floor(position / browse_page_size)
-    selected = position - (selected_page * browse_page_size)
+    selected_page = math.floor(position / max_page_size)
+    selected = position - (selected_page * max_page_size)
+    ids = []
 
     # if no prev chats, show msg
     if len(chats) == 0:
         margin = math.floor((cols - 24) / 2) * " "
         print(margin + c.grey("No previous chats found.") + margin)
+        browse_page_size = 1
 
     else:
         chat_page = chats[
-            selected_page * browse_page_size : selected_page * browse_page_size
-            + browse_page_size
+            selected_page * max_page_size : selected_page * max_page_size
+            + max_page_size
         ]
-        num_pages = math.ceil(len(chats) / browse_page_size)
+        browse_page_size = len(chat_page)
+        num_pages = math.ceil(len(chats) / max_page_size)
 
         index = 1
         ids = []
@@ -266,6 +270,7 @@ def browse_interface():
     """
     Prompt interface, printing previous
     """
+    global browse_page_size
     new_chat = False
     position = 0
     choice = 0
@@ -273,6 +278,11 @@ def browse_interface():
 
     print(HIDE_CURSOR)
     ids = print_prev_chats(position)
+
+    has_chat_pages = total_chats > max_page_size
+    ui_size = 7
+    if has_chat_pages:
+        ui_size += 1
 
     while True:
         num_options = len(ids)
@@ -288,7 +298,7 @@ def browse_interface():
             position -= 1
             if position < 0:
                 position = total_chats - 1
-            clear_n_lines(browse_page_size + 8)
+            clear_n_lines(num_options + ui_size)
             ids = print_prev_chats(position)
 
         # Down arrow
@@ -297,7 +307,7 @@ def browse_interface():
             position += 1
             if position >= total_chats:
                 position = 0
-            clear_n_lines(browse_page_size + 8)
+            clear_n_lines(num_options + ui_size)
             ids = print_prev_chats(position)
 
         # Tab or Arrow Right
@@ -306,7 +316,7 @@ def browse_interface():
             position += browse_page_size - (position % browse_page_size)
             if position >= total_chats:
                 position = 0
-            clear_n_lines(browse_page_size + 8)
+            clear_n_lines(num_options + ui_size)
             ids = print_prev_chats(position)
 
         # Arrow Left
@@ -315,24 +325,24 @@ def browse_interface():
             position -= (position % browse_page_size) + browse_page_size
             if position < 0:
                 position = total_chats - (total_chats % browse_page_size)
-            clear_n_lines(browse_page_size + 8)
+            clear_n_lines(num_options + ui_size)
             ids = print_prev_chats(position)
 
         # Select Option
         elif key == "\n" or key == "\r":
-            clear_n_lines(browse_page_size + 9)
-            choice = position % browse_page_size
+            clear_n_lines(num_options + ui_size)
+            choice = position % num_options
             break
 
         # Quit with 'q'
         elif key == "q":
-            clear_n_lines(browse_page_size + 9)
+            clear_n_lines(max(1, num_options) + ui_size)
             print(SHOW_CURSOR)
             return
 
         # new chat with 'n
         elif key == "n":
-            clear_n_lines(browse_page_size + 9)
+            clear_n_lines(num_options + ui_size)
             new_chat = True
             break
 
@@ -347,7 +357,7 @@ def chat_interface(prompt="", chat_id=None, is_new=False):
     """
     Provides an interactive interface for continuing the chat with the GPT-4o model.
     """
-
+    global browse_page_size
     prev_chat = get_prev_chat(chat_id) if not is_new else None
     has_quit = False
 
