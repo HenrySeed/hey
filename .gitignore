@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+hey-env/
+
 prev_chats.json
 
 # C extensions

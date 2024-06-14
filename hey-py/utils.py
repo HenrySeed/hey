@@ -148,7 +148,7 @@ def print_user_msg_frame(msg, time):
     print(get_time_str(time, True) + c.blue(" │"))
     if "\n" in msg:
         for line in msg.split("\n"):
-            print(" " * (cols - msg_width - 3), line + c.blue(" │"))
+            print(" " * (cols - msg_width + 1), line + c.blue(" │"))
     else:
         print(" " * (cols - get_visible_length(msg) - 3), msg + c.blue(" │"))
 
@@ -196,15 +196,16 @@ def get_visible_length(s):
     return len(stripped_string)
 
 
-def has_recent_conversation():
+def get_recent_conversation():
     """
     If the last conversation was < 1 min ago, we auto continue
+    Returns that chat if was less than 5 mins ago, else returns None
     """
     chats = get_saved_chats()
-    if chats[0]["time"] < (get_time_ms() - 1000 * 60 * 5):
-        return True
+    if chats[0]["messages"][-1]["time"] > (get_time_ms() - 1000 * 60 * 5):
+        return chats[0]
     else:
-        return False
+        return None
 
 
 def clear_n_lines(n):

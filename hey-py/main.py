@@ -27,7 +27,6 @@ Note: This script requires the OpenAI Python library and the 'glow' command-line
 from openai import OpenAI
 import sys
 import subprocess
-import os
 import signal
 import math
 import re
@@ -422,7 +421,9 @@ def main():
     # If the user has passed text, we generate a message
     # and give it back with no interface
     else:
-        msg = get_gpt_msg(prompt, None, no_frame=True)
+        continued_chat = get_recent_conversation()
+        print("")
+        msg = get_gpt_msg(prompt, continued_chat, no_frame=True)
         print(get_markdown(msg, no_wrap=True))
 
 
