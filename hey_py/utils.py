@@ -9,6 +9,7 @@ import random
 import json
 import uuid
 import os
+import math
 
 CLEAR_RIGHT = "\033[K"  # clean to the right of the cursor
 PREV_LINE = "\033[F"  # move cursor to the beginning of previous line
@@ -260,7 +261,7 @@ def print_goodbye():
 
 
 def center(str):
-    padding = round((cols - get_visible_length(str)) / 2) * " "
+    padding = math.floor((cols - get_visible_length(str)) / 2) * " "
     return padding + str + padding
 
 
