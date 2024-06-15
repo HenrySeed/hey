@@ -123,34 +123,42 @@ def save_chat(prompt, reply, user_time, ai_time, prev_id=None):
 # Message Style Utils =============================================================
 
 
-def get_time_str(time, right_align=False):
+def get_time_str(time, color="yellow"):
     time_str = get_formatted_datetime(time)
-
-    # I made the bar invisible as it wa a little distracting
-    bar_length = min(6, (cols - 10 - len(time_str) - 3))
-    bar = c.grey(" " * bar_length)
-    padding = " " * (cols - bar_length - len(time_str) - 3)
-    if right_align:
-        return padding + bar + " " + c.blue(time_str)
+    if color == "blue":
+        return c.blue(time_str)
     else:
-        return c.yellow(time_str + " ") + bar
+        return c.yellow(time_str + " ")
 
 
 def print_ai_msg_frame(msg, time):
     print("")
-    print(get_time_str(time))
+    print(get_time_str(time, "yellow"))
     for line in msg.split("\n"):
         print(line)
 
 
 def print_user_msg_frame(msg, time):
+    time_str = get_time_str(time, "blue")
+    bubble_inner = 4
+
+    time_width = get_visible_length(time_str)
+    text_width = msg_width - bubble_inner if "\n" in msg else get_visible_length(msg)
+    bubble_width = max(time_width, text_width)
+
+    time_padding = abs(bubble_width - time_width) * "─"
+    text_padding = abs(text_width - bubble_width) * " "
+    bubble_padding = (cols - bubble_width - bubble_inner) * " "
+
     print("")
-    print(get_time_str(time, True) + c.blue(" │"))
+
+    print(c.blue(bubble_padding + "╭" + time_padding) + " " + time_str + c.blue(" ╮"))
     if "\n" in msg:
         for line in msg.split("\n"):
-            print(" " * (cols - msg_width + 1), line + c.blue(" │"))
+            print(bubble_padding + c.blue("│ ") + line + c.blue(" │"))
     else:
-        print(" " * (cols - get_visible_length(msg) - 3), msg + c.blue(" │"))
+        print(bubble_padding + c.blue("│ ") + text_padding + msg + c.blue(" │"))
+    print(c.blue(bubble_padding + "╰─" + "─" * bubble_width + "─╯"))
 
 
 # Generic Utils ==================================================================

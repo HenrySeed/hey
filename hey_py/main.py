@@ -139,30 +139,35 @@ def get_args():
     arg_flags = [arg for arg in args if arg[0] == "-"]
     prompt = " ".join([arg for arg in args[1:] if arg[0] != "-"])
     is_continue = False
-    is_browse = False
     is_new = False
+    is_interactive = False
 
     for arg_flag in arg_flags:
         if arg_flag == "-c" or arg_flag == "--continue":
             is_continue = True
         elif arg_flag == "-n" or arg_flag == "--new":
             is_new = True
-        elif arg_flag == "-b" or arg_flag == "--browse":
-            is_browse = True
+        elif arg_flag == "-i" or arg_flag == "--interactive":
+            is_interactive = True
         elif arg_flag == "--clear-history":
             reset_prev_chats()
         else:
             print("")
             print_header()
-            print("Usage: hey [OPTIONS] [PROMPT]")
+            print("Usage: hey [OPTIONS -optional] [PROMPT -optional]")
+            print("")
+            print(
+                "Passing no prompt opens in interactive mode, passing a prompt will make it reply in 'inine' mode."
+            )
+            print("")
             print("Options:")
             print("  -n, --new	        Jumps straight into a new conversation")
-            print("  -b, --browse	    Choose a previous chat to continue from")
             print("  -c, --continue     Continue the previous chat")
+            print("  -i, --interactive  Reply to prompt in interactive chat")
             print("  --clear-history    Removes all previous chats")
             sys.exit(0)
 
-    return prompt, is_continue, is_browse, is_new
+    return prompt, is_continue, is_new, is_interactive
 
 
 def print_ai_msg(msg, time, ignore_markdown=False):
@@ -324,7 +329,7 @@ def browse_interface():
             # page, position = menu_move_x(1, [page, position], num_pages)
             position -= (position % browse_page_size) + browse_page_size
             if position < 0:
-                position = total_chats - (total_chats % browse_page_size)
+                position = total_chats - 1
             clear_n_lines(num_options + ui_size)
             ids = print_prev_chats(position)
 
@@ -336,7 +341,7 @@ def browse_interface():
 
         # Quit with 'q'
         elif key == "q":
-            clear_n_lines(max(1, num_options) + ui_size)
+            clear_n_lines(max(1, num_options) + ui_size + 1)
             print(SHOW_CURSOR)
             return
 
@@ -414,27 +419,42 @@ def main():
     init_prev_chats()
 
     # nicely formats args and prints help if needed
-    prompt, is_continue, is_browse, is_new = get_args()
+    prompt, is_continue, is_new, is_interactive = get_args()
+    has_prompt = len(prompt.strip()) > 0
 
-    # If the continue flag is passed, jump straight in there
-    if is_continue:
-        chat_interface(prompt)
+    # If the user gives a prompt, we reply "inline"
+    if has_prompt and not is_interactive:
+        # If the continue flag is passed, jump straight in there
+        if is_continue:
+            msg = get_gpt_msg(prompt, get_prev_chat(), no_frame=True)
+            print(get_markdown(msg, no_wrap=True))
 
-    # If new flag, start a new convo
-    elif is_new:
-        chat_interface(is_new=True)
+        # If new flag, start a new convo
+        if is_new:
+            msg = get_gpt_msg(prompt, None, no_frame=True)
+            print(get_markdown(msg, no_wrap=True))
 
-    # If the browse flag is passed, or the user didnt pass anything
-    elif is_browse or prompt.strip() == "":
-        browse_interface()
+        # If the user has passed text, we generate a message
+        # and give it back with no interface
+        else:
+            continued_chat = get_recent_conversation()
+            print("")
+            msg = get_gpt_msg(prompt, continued_chat, no_frame=True)
+            print(get_markdown(msg, no_wrap=True))
 
-    # If the user has passed text, we generate a message
-    # and give it back with no interface
+    # If the user has no prompt we enter the UI
     else:
-        continued_chat = get_recent_conversation()
-        print("")
-        msg = get_gpt_msg(prompt, continued_chat, no_frame=True)
-        print(get_markdown(msg, no_wrap=True))
+        # If the continue flag is passed, jump straight in there
+        if is_continue:
+            chat_interface(prompt, get_prev_chat()["id"])
+
+        # If new flag, start a new convo
+        elif is_new:
+            chat_interface(prompt, is_new=True)
+
+        # If the browse flag is passed, or the user didnt pass anything
+        elif prompt.strip() == "":
+            browse_interface()
 
 
 if __name__ == "__main__":
