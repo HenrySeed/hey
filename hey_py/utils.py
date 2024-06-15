@@ -23,7 +23,7 @@ data_json_path = file_path = os.path.join(script_dir, "prev_chats.json")
 cols = int(os.popen("stty size", "r").read().split()[1])
 
 # Formatting options for textwraps
-msg_width = cols - 10
+msg_width = cols - (10 if cols > 80 else 4)
 
 # Data Loading Utils ============================================================
 
@@ -139,10 +139,14 @@ def print_ai_msg_frame(msg, time):
 
 
 def print_user_msg_frame(msg, time):
-    time_str = get_time_str(time, "blue")
     bubble_inner = 4
 
-    time_width = get_visible_length(time_str)
+    if time:
+        time_str = " " + get_time_str(time, "blue") + " "
+    else:
+        time_str = ""
+
+    time_width = get_visible_length(time_str) - 2
     text_width = msg_width - bubble_inner if "\n" in msg else get_visible_length(msg)
     bubble_width = max(time_width, text_width)
 
@@ -152,7 +156,7 @@ def print_user_msg_frame(msg, time):
 
     print("")
 
-    print(c.blue(bubble_padding + "╭" + time_padding) + " " + time_str + c.blue(" ╮"))
+    print(c.blue(bubble_padding + "╭" + time_padding) + time_str + c.blue("╮"))
     if "\n" in msg:
         for line in msg.split("\n"):
             print(bubble_padding + c.blue("│ ") + line + c.blue(" │"))
@@ -187,8 +191,9 @@ def get_formatted_datetime(ms):
 
 
 def user_input():
-    print(c.blue("\n" + "─" * cols))
-    result = input(c.bold(c.blue("\n> \n\033[1A\033[2C")))
+    indent = cols - msg_width
+    print_user_msg_frame(" " * (msg_width - 4), None)
+    result = input(c.bold(c.blue("\033[2A\033[" + str(indent + 1) + "C")))
     clear_n_lines(3)
     return result
 
