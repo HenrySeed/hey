@@ -229,8 +229,8 @@ def print_prev_chats(position):
             active = selected == index - 1
 
             date = get_formatted_datetime(msgs[0]["time"]) + "  "
-            preview = msgs[0]["content"][0:max_preview]
-            is_trunc = len(msgs[0]["content"]) > max_preview
+            preview = msgs[0]["content"][0:max_preview].replace("\n", "")
+            is_trunc = len(preview) < len(msgs[0]["content"])
             preview_trail = ("..." if is_trunc else "   ") + " " * (
                 max_preview - len(preview)
             )
