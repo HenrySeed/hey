@@ -154,14 +154,19 @@ def get_args():
         else:
             print("")
             print_header()
-            print("Usage: hey [OPTIONS -optional] [PROMPT -optional]")
-            print("")
             print(
                 "Passing no prompt opens in interactive mode, passing a prompt will make it reply in 'inine' mode."
             )
             print("")
+            print(
+                "If the previous chat was less than 5 mins ago, it will by default continue."
+            )
+            print("")
+            print("")
+            print("Usage: hey [OPTIONS -optional] [PROMPT -optional]")
+            print("")
             print("Options:")
-            print("  -n, --new	        Jumps straight into a new conversation")
+            print("  -n, --new          Jumps straight into a new conversation")
             print("  -c, --continue     Continue the previous chat")
             print("  -i, --interactive  Reply to prompt in interactive chat")
             print("  --clear-history    Removes all previous chats")
@@ -299,7 +304,6 @@ def browse_interface():
 
         # Up arrow
         if key == "\x1b[A":
-            # page, position = menu_move_y(-1, [page, position], num_pages, num_options)
             position -= 1
             if position < 0:
                 position = total_chats - 1
@@ -308,7 +312,6 @@ def browse_interface():
 
         # Down arrow
         elif key == "\x1b[B":
-            # page, position = menu_move_y(1, [page, position], num_pages, num_options)
             position += 1
             if position >= total_chats:
                 position = 0
@@ -317,8 +320,7 @@ def browse_interface():
 
         # Tab or Arrow Right
         elif key == "\t" or key == "\x1b[C":
-            # page, position = menu_move_x(1, [page, position], num_pages)
-            position += browse_page_size - (position % browse_page_size)
+            position += browse_page_size - (position % max_page_size)
             if position >= total_chats:
                 position = 0
             clear_n_lines(num_options + ui_size)
@@ -326,8 +328,7 @@ def browse_interface():
 
         # Arrow Left
         elif key == "\x1b[D":
-            # page, position = menu_move_x(1, [page, position], num_pages)
-            position -= (position % browse_page_size) + browse_page_size
+            position -= (position % max_page_size) + browse_page_size
             if position < 0:
                 position = total_chats - 1
             clear_n_lines(num_options + ui_size)
@@ -340,7 +341,7 @@ def browse_interface():
             break
 
         # Quit with 'q'
-        elif key == "q":
+        elif key == "q" or key == "\x1b":
             clear_n_lines(max(1, num_options) + ui_size + 1)
             print(SHOW_CURSOR)
             return
