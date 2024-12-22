@@ -193,14 +193,13 @@ def get_formatted_datetime(ms):
 
 def user_input():
     indent = cols - msg_width
-    print_user_msg_frame(" " * (msg_width - 4), None)
-    result = input(c.bold(c.blue("\033[2A\033[" + str(indent + 1) + "C")))
+    print("\n\n" + c.blue(c.bold(">")))
+    result = input(c.bold(c.blue("\033[1A\033[2C")))
     clear_n_lines(3)
     return result
 
 
 def fake_user_input():
-    print(c.blue("\n" + "─" * cols))
     print(c.bold(c.blue("\n>\n")))
 
 

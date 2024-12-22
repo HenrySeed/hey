@@ -115,9 +115,9 @@ def get_gpt_msg(prompt, prev_chat=None, no_frame=False):
         save_chat(prompt, msg, user_time, ai_time)
 
     if no_frame == False:
-        clear_n_lines(9)
+        clear_n_lines(8)
     else:
-        clear_n_lines(3)
+        clear_n_lines(2)
     print(SHOW_CURSOR, end="")
 
     return msg
