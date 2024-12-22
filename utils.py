@@ -1,5 +1,5 @@
 import pandas as pd
-import hey_py.color as c
+import color as c
 import sys
 import termios
 import tty

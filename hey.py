@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 This script interacts with the OpenAI GPT-4o model to generate responses based on user prompts.
 It provides a command-line interface for users to have conversations with the GPT-4o model.
@@ -11,16 +13,6 @@ Options:
 The script uses the OpenAI Python library to communicate with the GPT-4o model.
 It saves the conversation history in a JSON file named 'prev_chats.json' in the same directory as the script.
 
-Functions:
-    - get_time_ms(): Returns the current time in milliseconds.
-    - get_markdown(command): Runs a command in the shell and returns the output.
-    - get_gpt_msg(prompt, prev_chat, is_continue=False): Generates a response from the GPT-4o model based on the prompt and previous chat history.
-    - get_args(): Parses the command-line arguments and returns the prompt and is_continue flag.
-    - get_prev_chat(): Retrieves the most recent chat history from the 'prev_chats.json' file.
-    - save_chat(prompt, reply, time, is_continue=False): Saves the user prompt and assistant reply in the chat history.
-    - chat_interface(prompt): Provides an interactive interface for continuing the chat with the GPT-4o model.
-    - main(): The main entry point of the script.
-
 Note: This script requires the OpenAI Python library and the 'glow' command-line tool to be installed.
 """
 
@@ -30,8 +22,8 @@ import subprocess
 import signal
 import math
 import re
-import hey_py.color as c
-from .utils import *
+import color as c
+from utils import *
 import readline  # Fixes input issues
 
 # Setup OpenAI client
